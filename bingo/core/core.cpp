@@ -16,6 +16,7 @@ namespace bingo::detail {
         Number* a{};
         Number* b{};
         int64_t value{};
+        Number* sibling{};
         uint64_t level{};
 
         bool operator==(const Number& another) const {
@@ -47,15 +48,13 @@ namespace bingo::detail {
             const auto n = new Number();
             n->type = type;
 
-            if (commutativity && a->level < b->level){
-                n->a = b;
-                n->b = a;
-            } else {
-                n->a = a;
-                n->b = b;
-            }
+            n->a = a;
+            n->b = b;
 
             n->level = n->a->level + 1;
+
+            n->a->sibling = n->b;
+            n->b->sibling = n->a;
 
             return n;
         }
@@ -147,3 +146,5 @@ namespace bingo::detail {
 }
 
 #include "engine.cpp"
+#include "variable.cpp"
+#include "reduce/reduce.cpp"

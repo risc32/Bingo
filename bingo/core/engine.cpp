@@ -5,19 +5,13 @@
 #include <utility>
 #include <vector>
 #include <algorithm>
+#include <cmath>
 
 #include "core.cpp"
 
 namespace bingo {
     struct PatternBuilder;
     PatternBuilder var(int64_t number);
-
-
-    struct PatternBase {
-        virtual ~PatternBase() = default;
-
-        virtual std::optional<PatternBuilder> match(PatternBuilder);
-    };
 
     namespace detail {
         constexpr OperationType opvar = static_cast<OperationType>(-1);
@@ -37,20 +31,20 @@ namespace bingo {
             return {*pattern.b};
         }
 
-        auto operator +(PatternBuilder b)  {
-            return PatternBuilder{*detail::Number::add(&pattern, &b.pattern)};
+        auto operator +(const PatternBuilder& b)  {
+            return PatternBuilder{*detail::Number::add(&pattern, const_cast<detail::Number *>(&b.pattern))};
         }
 
-        auto operator -(PatternBuilder b) {
-            return PatternBuilder{*detail::Number::sub(&pattern, &b.pattern)};
+        auto operator -(const PatternBuilder& b) {
+            return PatternBuilder{*detail::Number::sub(&pattern, const_cast<detail::Number *>(&b.pattern))};
         }
 
-        auto operator *(PatternBuilder b) {
-            return PatternBuilder{*detail::Number::mul(&pattern, &b.pattern)};
+        auto operator *(const PatternBuilder& b) {
+            return PatternBuilder{*detail::Number::mul(&pattern, const_cast<detail::Number *>(&b.pattern))};
         }
 
-        auto operator /(PatternBuilder b) {
-            return PatternBuilder{*detail::Number::div(&pattern, &b.pattern)};
+        auto operator /(const PatternBuilder& b) {
+            return PatternBuilder{*detail::Number::div(&pattern, const_cast<detail::Number *>(&b.pattern))};
         }
 
         auto operator +() const {
@@ -61,8 +55,8 @@ namespace bingo {
             return PatternBuilder{*detail::Number::neg(&pattern)};
         }
 
-        auto operator ^(PatternBuilder b) {
-            return PatternBuilder{*detail::Number::pow(&pattern, &b.pattern)};
+        auto operator ^(const PatternBuilder& b) {
+            return PatternBuilder{*detail::Number::pow(&pattern, const_cast<detail::Number *>(&b.pattern))};
         }
 
         PatternBuilder(int64_t value) : pattern{*detail::Number::constant(value)}{}
@@ -119,13 +113,51 @@ namespace bingo {
         Number() : Number(0) {}
         Number(PatternBuilder pb) : PatternBuilder(std::move(pb)) {}
 
+        static Number* ref(const detail::Number* num) {
+            auto n = new Number{};
+            n->pattern.a = num->a;
+            n->pattern.b = num->b;
+            n->pattern.value = num->value;
+            n->pattern.type = num->type;
+            n->pattern.sibling = num->sibling;
+            n->pattern.level = num->level;
+            return n;
+        }
+
         [[nodiscard]] bool has_childs() const {
             return pattern.has_childs();
         }
 
+        // all operators from PatternBuilder, but returns Number
+
+        Number operator +(const Number& b) {
+            return Number{*detail::Number::add(&pattern, const_cast<detail::Number *>(&b.pattern))};
+        }
+        Number operator -(const Number& b) {
+            return Number{*detail::Number::sub(&pattern, const_cast<detail::Number *>(&b.pattern))};
+        }
+        Number operator *(const Number& b) {
+            return Number{*detail::Number::mul(&pattern, const_cast<detail::Number *>(&b.pattern))};
+        }
+        Number operator /(const Number& b) {
+            return Number{*detail::Number::div(&pattern, const_cast<detail::Number *>(&b.pattern))};
+        }
+        Number operator +() const {
+            return *this;
+        }
+        Number operator -() {
+            return Number{*detail::Number::neg(&pattern)};
+        }
+        Number operator ^(const Number& b) {
+            return Number{*detail::Number::pow(&pattern, const_cast<detail::Number *>(&b.pattern))};
+        }
+
+        [[nodiscard]] detail::OResult apply_pattern(const PatternBuilder& b) const {
+            return b.check(*this);
+        }
+
     private:
-        //PatternBuilder a();
-        //PatternBuilder b();
+        //using PatternBuilder::check;
     };
 
     namespace detail {
@@ -143,7 +175,21 @@ namespace bingo {
                     : type(num.pattern.type)
             {
                 collect(num);
-                //normalize();
+            }
+
+            [[nodiscard]] bingo::Number getmany(std::vector<bingo::Number>::iterator begin, std::vector<bingo::Number>::iterator end) const {
+                bingo::Number res = *begin++;
+                std::for_each(begin, end, [&](bingo::Number& n) {
+                    res.pattern = *Number::create(new Number(res.pattern), &n.pattern, type, true);
+                });
+
+                return res;
+            }
+
+            void normalize() {
+                std::ranges::sort(operands, [&](const bingo::Number& a, const bingo::Number& b) {
+                    return a.pattern.type > b.pattern.type;
+                });
             }
 
         private:
@@ -161,11 +207,7 @@ namespace bingo {
                 }
             }
 
-            void normalize() {
-                std::ranges::sort(operands, [&](const bingo::Number& a, const bingo::Number& b) {
-                    return a.pattern < b.pattern;
-                });
-            }
+
         };
 
         Number *Number::opvar(const int64_t value) {
@@ -187,7 +229,14 @@ namespace bingo {
 
             return true;
         }
+
+        uint64_t ceil_div(const uint64_t a, const uint64_t d) {
+            return (a + d - 1) / d;
+        }
     }
+
+
+
 
     detail::OResult PatternBuilder::check(const PatternBuilder &_b) const {
         detail::Result res;
@@ -216,10 +265,10 @@ namespace bingo {
             return res;
         }
 
-        const detail::CommutativeNumber commA{*this};
+        detail::CommutativeNumber commA{*this};
         detail::CommutativeNumber commB{_b};
 
-        if (commA.type != commB.type || commA.operands.size() != commB.operands.size()) {
+        if (commA.type != commB.type || commA.operands.size() > commB.operands.size()) {
             return std::nullopt;
         }
 
@@ -229,27 +278,50 @@ namespace bingo {
         // commA.operands [a, c, b, r, h, e, d]
         // commB.operands [b, a, c, d, e, f, g]
         // to [r, h] and [f, g]
-
+        commA.normalize();
+        commB.normalize();
         for (const auto& operand : commA.operands) {
             bool found = false;
             for (int i = 0; i < bop.size(); ++i) {
-                if (operand.pattern == bop[i].pattern) {
+                if (auto cr_res = operand.check(bop[i])) {
                     found = true;
+                    if (!detail::merge(res, cr_res.value())) {
+                        return std::nullopt;
+                    }
                     bop.erase(bop.begin() + i);
                     break;
                 }
             }
             if (!found) aop.push_back(&operand);
         }
-        if (aop.size() - bop.size()) {
-            throw std::runtime_error{"Error in library, sorry."};
-        }
+        // if (aop.size() - bop.size()) {
+        //     throw std::runtime_error{"Error in library, sorry."};
+        // }
 
-        for (size_t i = 0; i < aop.size(); ++i) {
-            auto tmp = aop[i]->check(bop[i]);
+        // mul(mul(2, 3), 4)
+        // mul(2, 3, 4)
+
+        // x * y :
+        // x * y * z
+        if (aop.empty()) return res;
+        auto varsize = static_cast<int64_t>(detail::ceil_div(bop.size(), aop.size()));
+        int i = 0;
+        for (auto start = bop.begin(); start != bop.end(); i++) {
+            auto end = (std::distance(start, bop.end()) >= varsize)
+                       ? std::next(start, varsize)
+                       : bop.end();
+
+            auto tmp = aop[i]->check(commB.getmany(start, end));
             if (!tmp) return std::nullopt;
             if (!detail::merge(res, tmp.value())) return std::nullopt;
+
+            start = end;
         }
+        // for (size_t i = 0; i < aop.size(); ++i) {
+        //     auto tmp = aop[i]->check(bop[i]);
+        //     if (!tmp) return std::nullopt;
+        //     if (!detail::merge(res, tmp.value())) return std::nullopt;
+        // }
 
         //     for (const auto& c : to_check) {
         //         if (auto tmp = c.first.check(c.second)) {
@@ -274,7 +346,7 @@ namespace bingo {
     struct InvalidVarNumberException : std::exception{};
 
     PatternBuilder var(const int64_t number) {
-        if (number == 128) throw InvalidVarNumberException{};
+        if (number == -128) throw InvalidVarNumberException{};
         return PatternBuilder{
         *detail::Number::opvar(number)
         };

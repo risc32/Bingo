@@ -1,7 +1,11 @@
 #pragma once
 #include "core/core.cpp"
 namespace bingo {
-    void regpattern(PatternBuilder pattern) {
+    inline void regpattern(PatternBase* pattern) {
+        detail::patterns.push_back(pattern);
+    }
 
+    inline void stdconnect() {
+        regpattern(new reduce::PowerAdd{});
     }
 }
