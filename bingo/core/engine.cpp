@@ -10,8 +10,9 @@
 #include "core.cpp"
 
 namespace bingo {
+    struct Number;
     struct PatternBuilder;
-    PatternBuilder var(int64_t number);
+    PatternBuilder var(const int64_t number);
 
     namespace detail {
         constexpr OperationType opvar = static_cast<OperationType>(-1);
@@ -68,7 +69,7 @@ namespace bingo {
         // mul(var("x") + 1)
         // mul(add(3, 4)) + 1)
 
-        [[nodiscard]] detail::OResult check(const PatternBuilder& _b) const ;
+        [[nodiscard]] detail::OResult check(const PatternBuilder &_b, std::vector<Number> *left = {}) const ;
         // {
         //     detail::Result res;
         //
@@ -152,8 +153,8 @@ namespace bingo {
             return Number{*detail::Number::pow(&pattern, const_cast<detail::Number *>(&b.pattern))};
         }
 
-        [[nodiscard]] detail::OResult apply_pattern(const PatternBuilder& b) const {
-            return b.check(*this);
+        [[nodiscard]] detail::OResult apply_pattern(const PatternBuilder& b, std::vector<Number>* const left = nullptr) const {
+            return b.check(*this, left);
         }
 
     private:
@@ -176,6 +177,8 @@ namespace bingo {
             {
                 collect(num);
             }
+
+            CommutativeNumber() = default;
 
             [[nodiscard]] bingo::Number getmany(std::vector<bingo::Number>::iterator begin, std::vector<bingo::Number>::iterator end) const {
                 bingo::Number res = *begin++;
@@ -238,7 +241,7 @@ namespace bingo {
 
 
 
-    detail::OResult PatternBuilder::check(const PatternBuilder &_b) const {
+    detail::OResult PatternBuilder::check(const PatternBuilder &_b, std::vector<Number>* const left) const {
         detail::Result res;
 
         if (pattern.type == detail::opvar) {
@@ -303,7 +306,16 @@ namespace bingo {
 
         // x * y :
         // x * y * z
-        if (aop.empty()) return res;
+        if (aop.empty()) {
+            if (!bop.empty()) {
+                if (left) {
+                    *left = bop;
+                } else {
+                    return std::nullopt;
+                }
+            }
+            return res;
+        }
         auto varsize = static_cast<int64_t>(detail::ceil_div(bop.size(), aop.size()));
         int i = 0;
         for (auto start = bop.begin(); start != bop.end(); i++) {

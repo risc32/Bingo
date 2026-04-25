@@ -5,15 +5,63 @@
 namespace bingo::reduce {
     using namespace vars;
 
-
-
     struct PowerAdd : PatternBase {
-        bool match(Number& num) override {
-            auto res = num.apply_pattern((var(3) ^ var(1)) * (var(0) ^ var(2)));
-            if (!res) return false;
-            num = res.value()[0] ^ (res.value()[1] + res.value()[2]);
+        PatternBuilder pattern = (x ^ a) * (x ^ b);
+        const PatternBuilder& getpattern() override {return pattern;}
+
+        bool match(Number& num, const detail::Result& res) override {
+            num = x(res) ^ (a(res) + b(res));
             return true;
         }
     };
 
+    struct PowerSub : PatternBase {
+        PatternBuilder pattern = (x ^ a) / (x ^ b);
+        const PatternBuilder& getpattern() override {return pattern;}
+
+        bool match(Number& num, const detail::Result& res) override {
+            num = x(res) ^ (a(res) - b(res));
+            return true;
+        }
+    };
+
+    struct Square : PatternBase {
+        PatternBuilder pattern = x * x;
+        const PatternBuilder& getpattern() override {return pattern;}
+
+        bool match(Number& num, const detail::Result& res) override {
+            num = x(res) ^ 2;
+            return true;
+        }
+    };
+
+    struct AddMul : PatternBase {
+        PatternBuilder pattern = x * y + x * z;
+        const PatternBuilder& getpattern() override {return pattern;}
+
+        bool match(Number& num, const detail::Result& res) override {
+            num = x(res) * (y(res) + z(res));
+            return true;
+        }
+    };
+
+    struct SubMul : PatternBase {
+        PatternBuilder pattern = x * y - x * z;
+        const PatternBuilder& getpattern() override {return pattern;}
+
+        bool match(Number& num, const detail::Result& res) override {
+            num = x(res) * (y(res) - z(res));
+            return true;
+        }
+    };
+
+    struct DivSelf : PatternBase {
+        PatternBuilder pattern = x / x;
+        const PatternBuilder& getpattern() override {return pattern;}
+
+        bool match(Number& num, const detail::Result& res) override {
+            num = 1;
+            return true;
+        }
+    };
 }

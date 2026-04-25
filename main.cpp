@@ -6,6 +6,10 @@
 
 int main() {
     bingo::stdconnect();
+    bingo::optconnect();
+    //bingo::regpattern(new bingo::reduce::DivSelf);
+
+
     // bingo::Number f{1222};
     //
     // f = (10_bn*f)+(10_bn*782);
@@ -17,8 +21,8 @@ int main() {
     // f = (10_bn*f)*(10_bn);
     // auto pattern = (10_bn*1222)*(10_bn*1_vr);
     // auto res = pattern.check(f);
-    test();
-    test_comm();
+    //test();
+    //test_comm();
 
     // std::cout << "1.2 Variables and constants mixed order:" << std::endl;
     // auto p2 = (5_bn + 1_vr + 3_bn);
@@ -35,6 +39,9 @@ int main() {
     // printResult(p2.check(e2c));
     // std::cout << std::endl;
 
-    auto i = (3_bn ^ 2) * (3_bn ^ 4);
+    auto i = 4_bn * 8 / 4;
+    //printNumber(i);
+
     bingo::do_reduce(i);
+    printNumber(i);
 }

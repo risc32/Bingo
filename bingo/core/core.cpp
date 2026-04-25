@@ -2,6 +2,8 @@
 #include <cstdint>
 #include <string>
 
+//#define OPTIMIZE
+
 namespace bingo::detail {
     enum struct OperationType {
         Add,
@@ -60,6 +62,13 @@ namespace bingo::detail {
         }
 
         static Number* add(Number* a, Number* b) {
+#ifdef OPTIMIZE
+            if (a->type == OperationType::Constant and b->type == OperationType::Constant) {
+                return constant(a->value + b->value);
+            }
+            if (a->type == OperationType::Constant and a->value == 0) return b;
+            if (b->type == OperationType::Constant and b->value == 0) return a;
+#endif
             return create(a, b, OperationType::Add, true);
         }
 
@@ -72,6 +81,13 @@ namespace bingo::detail {
         }
 
         static Number* mul(Number* a, Number* b) {
+#ifdef OPTIMIZE
+            if (a->type == OperationType::Constant and b->type == OperationType::Constant) {
+                return constant(a->value * b->value);
+            }
+            if (a->type == OperationType::Constant and a->value == 1) return b;
+            if (b->type == OperationType::Constant and b->value == 1) return a;
+#endif
             return create(a, b, OperationType::Multiply, true);
         }
 
@@ -80,6 +96,10 @@ namespace bingo::detail {
         }
 
         static Number* pow(Number* a, Number* b) {
+#ifdef OPTIMIZE
+            if (a->type == OperationType::Constant and a->value == 0) return constant(0);
+            if (b->type == OperationType::Constant and b->value == 0) return constant(1);
+#endif
             return create(a, b, OperationType::Power);
         }
 
@@ -121,6 +141,7 @@ namespace bingo::detail {
                 //delete a;
                 //delete b;
             }
+            //delete this;
         }
 
         Number() = default;

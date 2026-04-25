@@ -3,169 +3,59 @@
 #include "core.cpp"
 
 namespace vars {
-    union __attribute__((packed)) variable {
-        struct {
-            char letter;
-            uint64_t number : 7*8;
-        } __attribute__((packed));
-        int64_t raw;
+    struct __attribute__((packed)) variable : bingo::Number {
+        union {
+            struct {
+                char letter;
+                uint64_t number : 7*8 = 0;
+            } __attribute__((packed));
+            int64_t raw;
+        };
+
+        explicit variable(const char letter, const uint64_t number = 0) : letter(letter), number(number) {
+            this->pattern = bingo::var(raw).pattern;
+        }
+
+        variable operator()(const uint64_t num = 0) const {
+            variable v = *this;
+            v.number = num;
+            return v;
+        }
+
+        Number operator()(bingo::detail::Result res) const {
+            return res[raw];
+        }
+
+        Number operator()(bingo::detail::OResult res) const {
+            return res.value()[raw];
+        }
+
+        operator int64_t() const {
+            return raw;
+        }
     };
 
-    bingo::PatternBuilder a(const uint64_t num) {
-        return bingo::var(variable{'a', num}.raw);
-    }
-    bingo::PatternBuilder b(const uint64_t num) {
-        return bingo::var(variable{'b', num}.raw);
-    }
-    bingo::PatternBuilder c(const uint64_t num) {
-        return bingo::var(variable{'c', num}.raw);
-    }
-    bingo::PatternBuilder d(const uint64_t num) {
-        return bingo::var(variable{'d', num}.raw);
-    }
-    bingo::PatternBuilder e(const uint64_t num) {
-        return bingo::var(variable{'e', num}.raw);
-    }
-    bingo::PatternBuilder f(const uint64_t num) {
-        return bingo::var(variable{'f', num}.raw);
-    }
-    bingo::PatternBuilder g(const uint64_t num) {
-        return bingo::var(variable{'g', num}.raw);
-    }
-    bingo::PatternBuilder h(const uint64_t num) {
-        return bingo::var(variable{'h', num}.raw);
-    }
-    bingo::PatternBuilder i(const uint64_t num) {
-        return bingo::var(variable{'i', num}.raw);
-    }
-    bingo::PatternBuilder j(const uint64_t num) {
-        return bingo::var(variable{'j', num}.raw);
-    }
-    bingo::PatternBuilder k(const uint64_t num) {
-        return bingo::var(variable{'k', num}.raw);
-    }
-    bingo::PatternBuilder l(const uint64_t num) {
-        return bingo::var(variable{'l', num}.raw);
-    }
-    bingo::PatternBuilder m(const uint64_t num) {
-        return bingo::var(variable{'m', num}.raw);
-    }
-    bingo::PatternBuilder n(const uint64_t num) {
-        return bingo::var(variable{'n', num}.raw);
-    }
-    bingo::PatternBuilder o(const uint64_t num) {
-        return bingo::var(variable{'o', num}.raw);
-    }
-    bingo::PatternBuilder p(const uint64_t num) {
-        return bingo::var(variable{'p', num}.raw);
-    }
-    bingo::PatternBuilder q(const uint64_t num) {
-        return bingo::var(variable{'q', num}.raw);
-    }
-    bingo::PatternBuilder r(const uint64_t num) {
-        return bingo::var(variable{'r', num}.raw);
-    }
-    bingo::PatternBuilder s(const uint64_t num) {
-        return bingo::var(variable{'s', num}.raw);
-    }
-    bingo::PatternBuilder t(const uint64_t num) {
-        return bingo::var(variable{'t', num}.raw);
-    }
-    bingo::PatternBuilder u(const uint64_t num) {
-        return bingo::var(variable{'u', num}.raw);
-    }
-    bingo::PatternBuilder v(const uint64_t num) {
-        return bingo::var(variable{'v', num}.raw);
-    }
-    bingo::PatternBuilder w(const uint64_t num) {
-        return bingo::var(variable{'w', num}.raw);
-    }
-    bingo::PatternBuilder x(const uint64_t num) {
-        return bingo::var(variable{'x', num}.raw);
-    }
-    bingo::PatternBuilder y(const uint64_t num) {
-        return bingo::var(variable{'y', num}.raw);
-    }
-    bingo::PatternBuilder z(const uint64_t num) {
-        return bingo::var(variable{'z', num}.raw);
-    }
+#define VAR(n) variable n{#n[0]}
+    VAR(a); VAR(b); VAR(c); VAR(d); VAR(e); VAR(f); VAR(g); VAR(h); VAR(i); VAR(j); VAR(k); VAR(l); VAR(m);
+    VAR(n); VAR(o); VAR(p); VAR(q); VAR(r); VAR(s); VAR(t); VAR(u); VAR(v); VAR(w); VAR(x); VAR(y); VAR(z);
 
-    bingo::PatternBuilder A(const uint64_t num) {
-        return bingo::var(variable{'A', num}.raw);
-    }
-    bingo::PatternBuilder B(const uint64_t num) {
-        return bingo::var(variable{'B', num}.raw);
-    }
-    bingo::PatternBuilder C(const uint64_t num) {
-        return bingo::var(variable{'C', num}.raw);
-    }
-    bingo::PatternBuilder D(const uint64_t num) {
-        return bingo::var(variable{'D', num}.raw);
-    }
-    bingo::PatternBuilder E(const uint64_t num) {
-        return bingo::var(variable{'E', num}.raw);
-    }
-    bingo::PatternBuilder F(const uint64_t num) {
-        return bingo::var(variable{'F', num}.raw);
-    }
-    bingo::PatternBuilder G(const uint64_t num) {
-        return bingo::var(variable{'G', num}.raw);
-    }
-    bingo::PatternBuilder H(const uint64_t num) {
-        return bingo::var(variable{'H', num}.raw);
-    }
-    bingo::PatternBuilder I(const uint64_t num) {
-        return bingo::var(variable{'I', num}.raw);
-    }
-    bingo::PatternBuilder J(const uint64_t num) {
-        return bingo::var(variable{'J', num}.raw);
-    }
-    bingo::PatternBuilder K(const uint64_t num) {
-        return bingo::var(variable{'K', num}.raw);
-    }
-    bingo::PatternBuilder L(const uint64_t num) {
-        return bingo::var(variable{'L', num}.raw);
-    }
-    bingo::PatternBuilder M(const uint64_t num) {
-        return bingo::var(variable{'M', num}.raw);
-    }
-    bingo::PatternBuilder N(const uint64_t num) {
-        return bingo::var(variable{'N', num}.raw);
-    }
-    bingo::PatternBuilder O(const uint64_t num) {
-        return bingo::var(variable{'O', num}.raw);
-    }
-    bingo::PatternBuilder P(const uint64_t num) {
-        return bingo::var(variable{'P', num}.raw);
-    }
-    bingo::PatternBuilder Q(const uint64_t num) {
-        return bingo::var(variable{'Q', num}.raw);
-    }
-    bingo::PatternBuilder R(const uint64_t num) {
-        return bingo::var(variable{'R', num}.raw);
-    }
-    bingo::PatternBuilder S(const uint64_t num) {
-        return bingo::var(variable{'S', num}.raw);
-    }
-    bingo::PatternBuilder T(const uint64_t num) {
-        return bingo::var(variable{'T', num}.raw);
-    }
-    bingo::PatternBuilder U(const uint64_t num) {
-        return bingo::var(variable{'U', num}.raw);
-    }
-    bingo::PatternBuilder V(const uint64_t num) {
-        return bingo::var(variable{'V', num}.raw);
-    }
-    bingo::PatternBuilder W(const uint64_t num) {
-        return bingo::var(variable{'W', num}.raw);
-    }
-    bingo::PatternBuilder X(const uint64_t num) {
-        return bingo::var(variable{'X', num}.raw);
-    }
-    bingo::PatternBuilder Y(const uint64_t num) {
-        return bingo::var(variable{'Y', num}.raw);
-    }
-    bingo::PatternBuilder Z(const uint64_t num) {
-        return bingo::var(variable{'Z', num}.raw);
-    }
+    VAR(A); VAR(B); VAR(C); VAR(D); VAR(E); VAR(F); VAR(G); VAR(H); VAR(I); VAR(J); VAR(K); VAR(L); VAR(M);
+    VAR(N); VAR(O); VAR(P); VAR(Q); VAR(R); VAR(S); VAR(T); VAR(U); VAR(V); VAR(W); VAR(X); VAR(Y); VAR(Z);
+
+#define CONTEXTVAR(n) bingo::Number n(const uint64_t num = 0) const { return ctx[variable{#n[0], num}.raw];}
+    struct context {
+        bingo::detail::Result&& ctx;
+
+        CONTEXTVAR(a); CONTEXTVAR(b); CONTEXTVAR(c); CONTEXTVAR(d); CONTEXTVAR(e); CONTEXTVAR(f);
+        CONTEXTVAR(g); CONTEXTVAR(h); CONTEXTVAR(i); CONTEXTVAR(j); CONTEXTVAR(k); CONTEXTVAR(l);
+        CONTEXTVAR(m); CONTEXTVAR(n); CONTEXTVAR(o); CONTEXTVAR(p); CONTEXTVAR(q); CONTEXTVAR(r);
+        CONTEXTVAR(s); CONTEXTVAR(t); CONTEXTVAR(u); CONTEXTVAR(v); CONTEXTVAR(w); CONTEXTVAR(x);
+        CONTEXTVAR(y); CONTEXTVAR(z);
+
+        CONTEXTVAR(A); CONTEXTVAR(B); CONTEXTVAR(C); CONTEXTVAR(D); CONTEXTVAR(E); CONTEXTVAR(F);
+        CONTEXTVAR(G); CONTEXTVAR(H); CONTEXTVAR(I); CONTEXTVAR(J); CONTEXTVAR(K); CONTEXTVAR(L);
+        CONTEXTVAR(M); CONTEXTVAR(N); CONTEXTVAR(O); CONTEXTVAR(P); CONTEXTVAR(Q); CONTEXTVAR(R);
+        CONTEXTVAR(S); CONTEXTVAR(T); CONTEXTVAR(U); CONTEXTVAR(V); CONTEXTVAR(W); CONTEXTVAR(X);
+        CONTEXTVAR(Y); CONTEXTVAR(Z);
+    };
 }
