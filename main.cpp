@@ -39,9 +39,11 @@ int main() {
     // printResult(p2.check(e2c));
     // std::cout << std::endl;
 
-    auto i = 4_bn * 8 / 4;
-    //printNumber(i);
+    auto x = vars::x(999);
+    //auto i = 4_bn + x;
+    auto num = bingo::I^2;
+    auto num2 = x ^ 3 ^ 6;
 
-    bingo::do_reduce(i);
-    printNumber(i);
+    bingo::do_reduce(num);
+    printNumber(num);
 }

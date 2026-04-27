@@ -2,13 +2,15 @@
 
 #include "core.cpp"
 
+
+
 namespace vars {
-    struct __attribute__((packed)) variable : bingo::Number {
+    struct variable : bingo::Number {
         union {
             struct {
-                char letter;
-                uint64_t number : 7*8 = 0;
-            } __attribute__((packed));
+                char letter{};
+                uint32_t number{};
+            };
             int64_t raw;
         };
 
@@ -19,7 +21,12 @@ namespace vars {
         variable operator()(const uint64_t num = 0) const {
             variable v = *this;
             v.number = num;
+            v.pattern = bingo::var(v.raw).pattern;
             return v;
+        }
+
+        variable(const variable& v) : raw(v.raw) {
+            this->pattern = v.pattern;
         }
 
         Number operator()(bingo::detail::Result res) const {
@@ -30,9 +37,13 @@ namespace vars {
             return res.value()[raw];
         }
 
-        operator int64_t() const {
+        explicit operator int64_t() const {
             return raw;
         }
+
+        // operator Number() const {
+        //     return bingo::Number{raw};
+        // }
     };
 
 #define VAR(n) variable n{#n[0]}
@@ -59,3 +70,5 @@ namespace vars {
         CONTEXTVAR(Y); CONTEXTVAR(Z);
     };
 }
+
+bingo::Number::Number(const vars::variable& v) : PatternBuilder{var(v.raw)} {}

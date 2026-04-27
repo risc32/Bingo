@@ -9,6 +9,10 @@
 
 #include "core.cpp"
 
+namespace vars {
+    struct variable;
+}
+
 namespace bingo {
     struct Number;
     struct PatternBuilder;
@@ -24,7 +28,7 @@ namespace bingo {
     }
 
     struct PatternBuilder {
-        detail::Number pattern;
+        mutable detail::Number pattern;
         [[nodiscard]] PatternBuilder a() const {
             return {*pattern.a};
         }
@@ -32,19 +36,19 @@ namespace bingo {
             return {*pattern.b};
         }
 
-        auto operator +(const PatternBuilder& b)  {
+        auto operator +(const PatternBuilder& b) const {
             return PatternBuilder{*detail::Number::add(&pattern, const_cast<detail::Number *>(&b.pattern))};
         }
 
-        auto operator -(const PatternBuilder& b) {
+        auto operator -(const PatternBuilder& b) const {
             return PatternBuilder{*detail::Number::sub(&pattern, const_cast<detail::Number *>(&b.pattern))};
         }
 
-        auto operator *(const PatternBuilder& b) {
+        auto operator *(const PatternBuilder& b) const {
             return PatternBuilder{*detail::Number::mul(&pattern, const_cast<detail::Number *>(&b.pattern))};
         }
 
-        auto operator /(const PatternBuilder& b) {
+        auto operator /(const PatternBuilder& b) const {
             return PatternBuilder{*detail::Number::div(&pattern, const_cast<detail::Number *>(&b.pattern))};
         }
 
@@ -52,15 +56,15 @@ namespace bingo {
             return *this;
         }
 
-        auto operator -() {
+        auto operator -() const {
             return PatternBuilder{*detail::Number::neg(&pattern)};
         }
 
-        auto operator ^(const PatternBuilder& b) {
+        auto operator ^(const PatternBuilder& b) const {
             return PatternBuilder{*detail::Number::pow(&pattern, const_cast<detail::Number *>(&b.pattern))};
         }
 
-        PatternBuilder(int64_t value) : pattern{*detail::Number::constant(value)}{}
+        PatternBuilder(const int64_t value) : pattern{*detail::Number::constant(value)}{}
 
         PatternBuilder() = default;
 
@@ -110,9 +114,11 @@ namespace bingo {
     std::is_arithmetic_v<T> Number(const T value) : PatternBuilder{*detail::Number::constant(value)} {
             //a = new Number(PatternBuilder::a());
         }
-        Number(int value) : Number(static_cast<int64_t>(value)) {}
+        Number(const int value) : Number(static_cast<int64_t>(value)) {}
         Number() : Number(0) {}
         Number(PatternBuilder pb) : PatternBuilder(std::move(pb)) {}
+
+        Number(const vars::variable& v);
 
         static Number* ref(const detail::Number* num) {
             auto n = new Number{};
@@ -131,25 +137,25 @@ namespace bingo {
 
         // all operators from PatternBuilder, but returns Number
 
-        Number operator +(const Number& b) {
+        Number operator +(const Number& b) const {
             return Number{*detail::Number::add(&pattern, const_cast<detail::Number *>(&b.pattern))};
         }
-        Number operator -(const Number& b) {
+        Number operator -(const Number& b) const {
             return Number{*detail::Number::sub(&pattern, const_cast<detail::Number *>(&b.pattern))};
         }
-        Number operator *(const Number& b) {
+        Number operator *(const Number& b) const {
             return Number{*detail::Number::mul(&pattern, const_cast<detail::Number *>(&b.pattern))};
         }
-        Number operator /(const Number& b) {
+        Number operator /(const Number& b) const {
             return Number{*detail::Number::div(&pattern, const_cast<detail::Number *>(&b.pattern))};
         }
         Number operator +() const {
             return *this;
         }
-        Number operator -() {
+        Number operator -() const {
             return Number{*detail::Number::neg(&pattern)};
         }
-        Number operator ^(const Number& b) {
+        Number operator ^(const Number& b) const {
             return Number{*detail::Number::pow(&pattern, const_cast<detail::Number *>(&b.pattern))};
         }
 
@@ -180,7 +186,7 @@ namespace bingo {
 
             CommutativeNumber() = default;
 
-            [[nodiscard]] bingo::Number getmany(std::vector<bingo::Number>::iterator begin, std::vector<bingo::Number>::iterator end) const {
+            [[nodiscard]] bingo::Number getmany(std::vector<bingo::Number>::iterator begin, const std::vector<bingo::Number>::iterator end) const {
                 bingo::Number res = *begin++;
                 std::for_each(begin, end, [&](bingo::Number& n) {
                     res.pattern = *Number::create(new Number(res.pattern), &n.pattern, type, true);
@@ -284,17 +290,20 @@ namespace bingo {
         commA.normalize();
         commB.normalize();
         for (const auto& operand : commA.operands) {
+            bool success = false;
             bool found = false;
             for (int i = 0; i < bop.size(); ++i) {
                 if (auto cr_res = operand.check(bop[i])) {
-                    found = true;
-                    if (!detail::merge(res, cr_res.value())) {
-                        return std::nullopt;
+                    detail::Result tmp_res = res;
+                    if (detail::merge(tmp_res, cr_res.value())) {
+                        res = std::move(tmp_res);
+                        bop.erase(bop.begin() + i);
+                        success = true;
+                        break;  // нашли подходящий
                     }
-                    bop.erase(bop.begin() + i);
-                    break;
                 }
             }
+            if (!success) return std::nullopt;
             if (!found) aop.push_back(&operand);
         }
         // if (aop.size() - bop.size()) {
@@ -371,11 +380,11 @@ namespace bingo {
     }
 }
 
-bingo::Number operator""_bn(unsigned long long int value) {
+bingo::Number operator""_bn(const unsigned long long int value) {
     return bingo::Number{value};
 }
 
-bingo::PatternBuilder operator""_vr(unsigned long long int value) {
+bingo::PatternBuilder operator""_vr(const unsigned long long int value) {
     return bingo::var(value);
 }
 

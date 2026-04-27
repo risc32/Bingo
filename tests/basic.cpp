@@ -16,11 +16,17 @@ void printTestHeader(const std::string& name) {
     std::cout << "========================================\n" << std::endl;
 }
 
-void printNumber(const bingo::Number& n, int indent = 0) {
-    const std::string indentStr(indent * 2, ' ');
+void printNumber(const bingo::Number& n, const int indent = 0) {
+    const std::string indentStr(indent * 4, ' ');
 
     if (!n.has_childs()) {
-        std::cout << indentStr << "Constant: " << n.pattern.value << std::endl;
+        if (n.pattern.type == bingo::detail::opvar) {
+            vars::variable v{0};
+            v.raw = n.pattern.value;
+            std::cout << indentStr << "Variable: " << v.letter << '(' << v.number << ')' << std::endl;
+
+        }
+        else std::cout << indentStr << "Constant: " << n.pattern.value << std::endl;
         return;
     }
 
@@ -34,7 +40,7 @@ void printNumber(const bingo::Number& n, int indent = 0) {
 
     std::cout << indentStr << "(" << std::endl;
     printNumber(n.a(), indent + 1);
-    std::cout << indentStr << "  " << op << std::endl;
+    std::cout << indentStr << "    " << op << std::endl;
     printNumber(n.b(), indent + 1);
     std::cout << indentStr << ")" << std::endl;
 }

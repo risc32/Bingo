@@ -3,7 +3,7 @@
 #include "reduce.cpp"
 
 namespace bingo::detail {
-    bool w_overflow_mul(int64_t a, int64_t b) {
+    bool w_overflow_mul(const int64_t a, const int64_t b) {
         if (a == 0 || b == 0) return false;
         if (a > 0 && b > 0) return a > INT64_MAX / b;
         if (a > 0 && b < 0) return b < INT64_MIN / a;
@@ -14,13 +14,13 @@ namespace bingo::detail {
         return false;
     }
 
-    bool w_overflow_add(int64_t a, int64_t b) {
+    bool w_overflow_add(const int64_t a, const int64_t b) {
         if (a > 0 && b > 0) return a > INT64_MAX - b;
         if (a < 0 && b < 0) return a < INT64_MIN - b;
         return false;
     }
 
-    bool w_overflow_pow(int64_t base, int64_t exp) {
+    bool w_overflow_pow(const int64_t base, const int64_t exp) {
         if (exp < 0) return true;
         if (base == 0) return false;
         if (base == 1) return false;
@@ -41,7 +41,7 @@ namespace bingo::detail {
         return result > INT64_MAX;
     }
 
-    bool w_overflow(int64_t a, int64_t b, OperationType op) {
+    bool w_overflow(const int64_t a, const int64_t b, const OperationType op) {
         switch (op) {
             case OperationType::Add:      return w_overflow_add(a, b);
             case OperationType::Multiply: return w_overflow_mul(a, b);
@@ -50,7 +50,7 @@ namespace bingo::detail {
         }
     }
 
-    bool can_fold(int64_t a, int64_t b, OperationType op) {
+    bool can_fold(const int64_t a, const int64_t b, const OperationType op) {
         switch (op) {
             case OperationType::Add:      return !w_overflow_add(a, b);
             case OperationType::Multiply: return !w_overflow_mul(a, b);
@@ -59,7 +59,7 @@ namespace bingo::detail {
         }
     }
 
-    bool safe_apply(int64_t a, int64_t b, OperationType op, int64_t &result) {
+    bool safe_apply(const int64_t a, const int64_t b, const OperationType op, int64_t &result) {
         if (!can_fold(a, b, op)) return false;
 
         switch (op) {
